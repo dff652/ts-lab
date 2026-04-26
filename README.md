@@ -47,18 +47,20 @@ python -m benchmarks.scripts.audit
 python -m benchmarks.run_benchmark --technique baseline
 ```
 
-## Development Status
+## Development Status (2026-04-26)
 
 | Track | Component | Status |
 |---|---|---|
-| A | Repo skeleton | ✅ Day 1 |
-| A | backend/client SDK extraction | 🔴 not started |
-| A | baseline runner | 🔴 not started |
+| A | Repo skeleton + push origin/main + docs 中文化 | ✅ |
+| A | backend/client SDK extraction | 🟡 starting point exists: `ts-platform/backend/tests/examples/client.py` (509 lines) |
+| A | baseline runner | 🔴 not started (blocked on SDK route decision e1/e2) |
 | B | Data audit | 🔴 not started |
 | B | Golden dataset (50 pilot) | 🔴 not started |
-| C | ts-platform Issue 1 (response_format) | 🔴 not filed |
-| C | ts-platform Issue 2 (rendered image) | 🔴 not filed |
-| C | ts-platform Issue 3 (raw VL output) | 🔴 not filed |
+| C | ts-platform Issue 1 (response_format) | 🟡 spec ready, **direct implementation pending** (#36, half-day) |
+| C | ts-platform Issue 2 (rendered image) | 🟡 spec ready, direct implementation (#4.2, half-day) |
+| C | ts-platform Issue 3 (raw VL output) | 🟡 spec ready but **urgency reduced** — `vllm_client` already gracefully captures `raw_text`; only DB persistence missing |
+
+> **Note**: ts-lab and ts-platform share a single maintainer. Track C does not require external issue filing — the `docs/track-c/` drafts now serve as design specs for direct implementation. See [TODO.md](TODO.md) §"本次会话关键发现" for full context.
 
 ## Technique Roadmap
 

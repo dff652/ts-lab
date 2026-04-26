@@ -14,7 +14,12 @@ ts-lab 多个技术需要拿到 Qwen-VL 的**原始文本输出**，而不只是
 - **`self_critique`**：把模型自己上一次的输出作为文本送回审查
 - **一般研究**：理解模型「怎样输出畸形 JSON」有助于精炼 prompt
 
-当前 `vllm_client.py:303-330` 在解析成功后丢弃原始文本，解析失败时直接 hard error。原始文本永远不会进入存储或 API。
+**现状（2026-04-26 核查 ts-platform 真实代码后修正）**：`vllm_client.py:303-339` 已经 graceful 失败 —— 解析失败 / 输出不完整时返回 `VLLMResult(success=False, raw_text=raw_text, error_code=ERR_PARSE/ERR_INCOMPLETE, ...)`，**原始文本已被捕获在 `raw_text` 字段**。当前缺口仅是：
+
+- `raw_text` 没有持久化到 DB（results 表无对应列）
+- API 响应不暴露 `raw_text`
+
+因此本 issue 的紧迫性比初稿描述的低 —— 不再涉及"保住原始文本"的核心问题，而是"把已捕获的原始文本沉淀到存储 + API"。
 
 ## 必需改动
 

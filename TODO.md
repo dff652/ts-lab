@@ -26,9 +26,9 @@ This file is the **single source of truth** for project planning. The session-in
 
 | Track | 内容 | Day 1 投入 | 状态 |
 |---|---|---|---|
-| **A 工程** | ts-lab 仓库 + backend/client SDK + baseline | 1-2 小时 | ✅ 仓库骨架完成 |
+| **A 工程** | ts-lab 仓库 + backend/client SDK + baseline | 1-2 小时 | 🟡 骨架 ✅ + push 远程 ✅ + 文档全中文 ✅；SDK 抽取未启动（已发现 `backend/tests/examples/client.py` 509 行半成品） |
 | **B 数据** | audit + 50 pilot 标注 + kappa | 1-2 小时 | 🔴 未开始 |
-| **C 平台** | 3 个 ts-platform issue + 跟进合并 | 1-2 小时 | 🔴 未开始 |
+| **C 平台** | ~~3 个 ts-platform issue + 跟进合并~~ → 直接实装 3 个 ts-platform 改动 | 1-2 小时 | 🟡 草稿完成；**单人维护，无需走 issue tracker**（详见下方 §"本次会话关键发现"） |
 
 **三轨必须 Day 1 同步启动**，不是顺序。
 
@@ -46,14 +46,58 @@ Track C Issue 2 ──────────────────→ chain_
                                                   ──→ 组合消融 ──→ Sink
 ```
 
-## 关键 Deadline
+## 关键 Deadline（2026-04-26 校准：单人维护下无外部排期，所谓"deadline"即"自我实施窗口"）
 
-| 任务 | Deadline | 阻塞 |
+| 任务 | 实施窗口 | 阻塞 |
 |---|---|---|
-| Issue 1 提交（#4） | Day 1 | 平台排期 |
+| ~~Issue 1 提交~~ → Issue 1 实装（#36） | 半天 | 待 Python 环境（#35）+ 拍板即可启动 |
+| Issue 2 实装 | 半天 | guided_json 跑通后再做更划算 |
+| Issue 3 实装 | 1-2 小时 | **紧迫性已降**，因 `vllm_client.py` 已 graceful 失败（详见 §"本次会话关键发现"） |
 | golden v1-pilot 完成（#13） | Day 10 | baseline 阻塞 |
-| Issue 1 合并 | Day 14 | guided_json 阻塞 |
-| Issue 2 合并 | Day 21 | chain_of_zoom 阻塞 |
+
+---
+
+# 📌 本次会话关键发现（2026-04-26）
+
+> 本节记录 2026-04-26 会话中颠覆性发现，影响 Track A/C 走向。详细决策记录见 `~/.claude/projects/-home-dff652-my-project/memory/`。
+
+## 重大语境变更
+
+- **同一人维护 ts-lab 与 ts-platform** —— Track C 原"提 issue 等平台团队合并"流程作废；三个 issue 草稿现作 ts-platform 改动的设计 spec，直接实装。
+- **ts-platform 在私有 Atlassian 栈**：Bitbucket Server 5.1.4 @ `http://192.168.199.94:7990/projects/IAILP/repos/ts-platform/browse` + Jira 7.4.1 @ `:8080`（项目 key 待核实，未必是 IAILP）。`gh` CLI 不适用。
+- **ts-lab 已推送到 GitHub** `https://github.com/dff652/ts-lab`（main 分支，2 个 commit：Day 1 骨架 `42eeae9` + 文档中文化 `401927f`）。
+- **ts-lab/docs 全部统一中文**（11 份文件，commit `401927f`）。
+
+## 草稿与现实出入（核查 ts-platform 真实代码后修正）
+
+- `vllm_backend.py` 实际位于 `backend/app/adapters/vllm_backend.py`（107 行），**不在** `gpu_algorithms/` 子目录 —— 草稿（issue-1-response-format.md）路径误写
+- **`vllm_client.py:303-339` 解析失败时已 graceful 返回** `VLLMResult(success=False, raw_text=raw_text, error_code=ERR_PARSE)`，**不是**草稿描述的 "hard error"。原始文本已被捕获在 `raw_text` 字段，仅缺持久化到 DB → **Issue 3 紧迫性大降**（见 #38 修订草稿）
+- ts-platform `backend/tests/examples/client.py` 已存在 509 行 SDK 草稿（CLAUDE.md 称为"外部系统直接复制使用"）+ `backend/tests/example_api_usage.py` 390 行已跑通 → Track A #14 #15 #16 抽取工作有现成起点
+
+## ts-platform 关键约束（来自 ts-platform/CLAUDE.md，影响后续实装）
+
+- 字节/大小字段 ORM 必须 `BigInteger`（Issue 3 若加字节计数字段需注意；`raw_model_output` 用 `Text` 不影响）
+- Alembic 删除 revision 必须同步改所有 `down_revision` 引用，否则 DAG `KeyError`
+- 不删 git 分支
+- 大文件（>5MB）不入 git，已配 pre-commit hook 拦截
+- vLLM 0.17.1 + tensor-parallel-2 需要 `--disable-custom-all-reduce --enforce-eager` + `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:False`
+- ts-platform 已有 250+ pytest（`backend/tests/`，conftest 提供 `async_db / client / auth_headers` fixtures）
+
+## 本机环境现状（影响 #2 pytest）
+
+- Python 3.12.3 已装，但**无 pip / 无 venv / 无 conda**
+- 装了 docker（无容器在跑）+ curl + wget + claude
+- ts-platform 在本机也无 venv，开发可能在别处（容器 / 别的机器）
+- ts-lab 跑 pytest（TODO #2）卡在 Python 环境 → 待决方案见 #35
+
+## 待决问题（合并问 / 等用户拍板）
+
+| 编号 | 问题 | 选项 |
+|---|---|---|
+| **e** | SDK 抽取路线 | e1: 先抽 `backend/client/` 干净 package（慢，长远好）；e2: ts-lab 先 `requests` 包薄壳（快，未来重写） |
+| **l** | RC-10 沉淀 SOP 是否保留 | l1: 全保留（生产真有用户）；l2: 砍成"自测→merge"（纯实验）；l3: 折中（保留 feature flag + 自测） |
+| **env** | Python 环境 | o1: curl 装 uv（无 sudo，推荐）；o2: `sudo apt install python3.12-venv python3-pip`；o3: docker；o4: 跳过 pytest #2 |
+| **j** | Jira 项目 key | 单人维护下不需 Jira，**已自动失效** |
 
 ---
 
@@ -216,14 +260,17 @@ Track C Issue 2 ──────────────────→ chain_
 
 ## Day 1 收尾（立即）
 
-- [ ] **#1** 初次提交 ts-lab Day 1 骨架（`git add -A && git commit -m "init: ts-lab Day 1 skeleton"`）
-- [ ] **#2** 创建 venv，`pip install -e ".[dev]"`，运行 `pytest tests/ -v` 验证骨架
+- [x] **#1** 初次提交 ts-lab Day 1 骨架 + push 到 `origin/main`（commit `42eeae9`，43 文件 / 2054 行；远程 `https://github.com/dff652/ts-lab`）
+- [~] **#2** 创建 venv，`pip install -e ".[dev]"`，运行 `pytest tests/ -v` 验证骨架 — **Blocked on**：本机无 pip/venv/conda → 见 #35
 
-## Track C — 平台配合（并行 Day 1）
+## Track C — ts-platform 改动（单人维护，直接实装，无需提 issue）
 
 - [x] **#3** 起草 3 个 ts-platform issue（按 RC-7 规格）→ 已完成于 [docs/track-c/](docs/track-c/)
-- [ ] **#4** 提交 3 个 issue 到 ts-platform 仓库，加优先级标签（**Day 1 必须**）
-- [ ] **#5** 与平台团队同步会议，确认 Issue 1 排期 ≤ Day 14
+- [~] **#4** ~~提交 3 个 issue 到 ts-platform 仓库~~ → **改为**：直接实装 3 个 ts-platform 改动（草稿作设计 spec 用）
+  - **#4.1** Issue 1 实装 → 见 #36（半天，最高优先）
+  - **#4.2** Issue 2 实装（渲染图回传，半天）
+  - **#4.3** Issue 3 实装（`raw_model_output` DB 列，1-2 小时；**紧迫性已降**，因 vllm_client 已 graceful 失败 + 草稿待修订 #38）
+- [x] **#5** ~~与平台团队同步会议~~ → **作废**（单人维护，无需）
 
 ### Track C nice-to-have（不阻塞 lab，但提升体验，提交 issue 但不强制 deadline）
 
@@ -246,7 +293,7 @@ Track C Issue 2 ──────────────────→ chain_
 
 ## Track A — 工程（Day 2-7）
 
-- [ ] **#14** 阅读 `ts-platform/backend/tests/example_api_usage.py` 与 `tests/integration/`，规划 `backend/client/` 抽取边界
+- [ ] **#14** 阅读 `ts-platform/backend/tests/example_api_usage.py`（390 行，已跑通）+ `tests/integration/`，规划 `backend/client/` 抽取边界。**起点已存在**：`backend/tests/examples/client.py`（509 行 SDK 草稿，CLAUDE.md 称"外部系统直接复制使用"）—— 抽取本质是把这份从 examples/ 提升为正式 package + 拆模块（auth/inference/data_pool/comparisons/results）
 - [ ] **#15** 在 ts-platform 实现 `backend/client/`（auth / inference / data_pool / comparisons / results）
 - [ ] **#16** 重构 ts-platform `tests/` 改为 import client，验证 CI 通过
 - [ ] **#17** 实现 `eval/metrics.py`（按 RC-8 三种 F1 + per_data_type breakdown）
@@ -269,6 +316,24 @@ Track C Issue 2 ──────────────────→ chain_
 - [ ] **#29** 实现 `chain_of_zoom.py`（**Blocked on**: Track C Issue 2 合并），跑 benchmark + 写报告
 - [ ] **#29b** 实现 `token_budget.py` 自适应 max_tokens（消除 truncation 失败），跑 benchmark + 写报告
 - [ ] **#30** 组合消融：堆叠胜出 technique，画 cost-F1 帕累托前沿
+
+## 本次会话新增（2026-04-26）
+
+- [~] **#35** 解决 ts-lab Python 环境（**待用户拍板**，详见 §"待决问题"的 env）
+  - o1：curl 装 `uv` 到 `~/.local/bin`（无需 sudo，单二进制，推荐）
+  - o2：`sudo apt install python3.12-venv python3-pip`（标准 Debian 路线）
+  - o3：用 docker（需指定 image）
+  - o4：跳过 pytest #2 直接进 #36（pytest 仅测 import + iou 函数，ceremony 含量极高）
+- [ ] **#36** 实装 Issue 1 —— `response_format` 透传到 ts-platform（**最高优先，半天**）
+  - 设计 spec：[docs/track-c/issue-1-response-format.md](docs/track-c/issue-1-response-format.md)（路径已纠正：`vllm_backend.py` 在 `adapters/` 下，**不在** `gpu_algorithms/`）
+  - **Step 1**（10 min）读 5 文件：`adapters/vllm_backend.py`(107 行) + `adapters/vllm_client.py` payload 段 + `adapters/gpu_algorithms/qwen.py` + `api/inference_external.py` + `schemas/inference_service.py`
+  - **Step 2**（30 min）改 10-20 行：vllm_client.py payload 加 `extra_body={"guided_json": schema}`；其余 4 文件参数透传 + Pydantic schema 加 `response_format: dict | None = None`
+  - **Step 3**（20 min）加集成测试到 `backend/tests/integration/`：用 ts-lab `ANOMALY_SCHEMA` 提交推理任务，校验输出 100% 合法 JSON
+  - **Step 4**（auto）跑 ts-platform 现有 250+ 测试确认零回归
+  - 完成后回 ts-lab 把 [techniques/vl_self_refinement/guided_json.py](techniques/vl_self_refinement/guided_json.py) 的 `NotImplementedError` 实装掉
+- [ ] **#37** 决策 RC-10 沉淀 SOP（**待用户拍板** l1/l2/l3，详见 §"待决问题"）
+- [x] **#38** 修订 [docs/track-c/issue-3-raw-output.md](docs/track-c/issue-3-raw-output.md) 背景段 —— 已加注 2026-04-26 核查结论："vllm_client 已 graceful 失败，原始文本已捕获在 raw_text 字段，仅缺持久化到 DB + API 暴露"
+- [ ] **#39** 决策 SDK 抽取路线（**待用户拍板** e1/e2，详见 §"待决问题"）
 
 ## Sink — 沉淀回 ts-platform（按 RC-10 流程）
 
@@ -314,6 +379,12 @@ Track C Issue 2 ──────────────────→ chain_
 > 第一条完成的 todo 起开始记录。格式：`YYYY-MM-DD #编号 简述`
 
 - 2026-04-26 #3 起草 3 个 ts-platform issue（response_format / rendered image / raw output），存于 docs/track-c/
+- 2026-04-26 #1 ✅ 初次提交 ts-lab Day 1 骨架 + push 到 origin/main（commit 42eeae9，43 文件 / 2054 行；远程 `https://github.com/dff652/ts-lab`）
+- 2026-04-26 docs 11 份全部转中文 + Track C/README 反映单人维护现实（commit 401927f）
+- 2026-04-26 ts-platform 真实状况核查：`vllm_backend.py` 路径修正、`vllm_client.py` 已 graceful 失败（Issue 3 紧迫性降）、`backend/tests/examples/client.py` 是 SDK 半成品（509 行）
+- 2026-04-26 #5 ~~平台同步会议~~ 作废（单人维护，无需）
+- 2026-04-26 Track C 流程从"提 issue 等合并"改为"直接实装 ts-platform 改动"
+- 2026-04-26 #38 修订 issue-3 背景段 + README.md 状态表更新（C 项从"not filed"改为"spec ready, urgency reduced"）
 
 ---
 
@@ -321,11 +392,13 @@ Track C Issue 2 ──────────────────→ chain_
 
 ## ts-lab 内部
 - [README.md](README.md) — 项目入口
-- [docs/golden-dataset.md](docs/golden-dataset.md) — 数据集规范
-- [docs/annotation-spec.md](docs/annotation-spec.md) — 标注规范
-- [docs/benchmark-methodology.md](docs/benchmark-methodology.md) — F1 定义权威文档
-- [docs/reproducibility.md](docs/reproducibility.md) — 复现 SOP
-- [docs/experiments/template.md](docs/experiments/template.md) — 实验报告模板
+- 远程仓库 https://github.com/dff652/ts-lab
+- [docs/golden-dataset.md](docs/golden-dataset.md) — 数据集规范（中文）
+- [docs/annotation-spec.md](docs/annotation-spec.md) — 标注规范（中文）
+- [docs/benchmark-methodology.md](docs/benchmark-methodology.md) — F1 定义权威文档（中文）
+- [docs/reproducibility.md](docs/reproducibility.md) — 复现 SOP（中文）
+- [docs/experiments/template.md](docs/experiments/template.md) — 实验报告模板（中文）
+- [docs/track-c/](docs/track-c/) — ts-platform 改动设计 spec（3 份，已转单人维护视角）
 
 ## ts-platform（治理 / 设计决策）
 - [design-vl-self-refinement.md](../ts-platform/docs/design-vl-self-refinement.md) — 主设计 ⭐
