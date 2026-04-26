@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Reports - intermediate / cache only; final reports are committed
+eval/reports/cache/
+eval/reports/*.tmp
+
+# Secrets
+.env
+.env.local
+*.key
+*.pem
+
+# OS
+Thumbs.db
+
+# Note: NOT ignoring data files in benchmarks/golden_dataset/samples/
+# Pilot phase (<10MB) keeps data in git directly.
+# Add git-lfs/DVC at Alpha-Beta stage (200-500 samples).
