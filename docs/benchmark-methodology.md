@@ -1,76 +1,76 @@
-# Benchmark Methodology
+# 评测方法论
 
-> **Status**: TODO — finalize before first baseline run.
+> **状态**：TODO —— 在首次跑 baseline 之前定稿。
 
-This document is **authoritative for F1 definitions**. Code in `eval/metrics.py` must match.
+本文档对 **F1 定义**具有权威性。`eval/metrics.py` 中的代码必须与之一致。
 
-## Metrics
+## 指标
 
-### Primary: Range-based F1 (Tatbul 2018, simplified)
+### 主指标：Range-based F1（Tatbul 2018 简化版）
 
-For each predicted interval `p`:
-- TP if exists ground-truth `g` with `IoU(p, g) >= threshold`
-- FP otherwise
+对每个预测区间 `p`：
+- TP：存在某个 ground-truth `g` 使 `IoU(p, g) >= 阈值`
+- FP：否则
 
-For each ground-truth interval `g`:
-- TP if exists predicted `p` with `IoU(p, g) >= threshold`
-- FN otherwise
+对每个 ground-truth 区间 `g`：
+- TP：存在某个预测 `p` 使 `IoU(p, g) >= 阈值`
+- FN：否则
 
-Report at **two thresholds**: 0.3 (lenient) and 0.5 (strict).
+报告**两档阈值**：0.3（宽松）和 0.5（严格）。
 
-### Secondary: Point-level F1
+### 次指标：Point-level F1
 
-Each timestamp `t` is binary (anomaly / normal). Standard precision/recall/F1.
+每个时间点 `t` 二分类（异常 / 正常），标准 precision/recall/F1。
 
-Report this for fine-grained comparison. Sensitive to boundary precision.
+报告它用于细粒度对比，对边界精度敏感。
 
-### Tertiary: Mean IoU
+### 第三指标：Mean IoU
 
-For matched (TP) intervals only. Indicates boundary quality.
+仅针对匹配上的（TP）区间计算。反映边界质量。
 
-## Reporting Requirements
+## 报告要求
 
-Every experiment report must include:
+每份实验报告必须含：
 
-| Metric | Reason |
+| 指标 | 理由 |
 |---|---|
-| Range F1 @ IoU=0.3 | Lenient view |
-| Range F1 @ IoU=0.5 | Strict view |
-| Point F1 | Fine-grained |
-| Mean IoU (TP only) | Boundary quality |
-| Per-data_type breakdown | Catch local positives |
+| Range F1 @ IoU=0.3 | 宽松视角 |
+| Range F1 @ IoU=0.5 | 严格视角 |
+| Point F1 | 细粒度 |
+| Mean IoU（仅 TP） | 边界质量 |
+| 按 data_type 分层 | 抓住局部 positive |
 
-## Statistical Significance
+## 统计显著性
 
-**Mandatory** for any "+technique" claim:
+任何"+technique"声明**强制**包含：
 
-1. **Paired difference**: each sample contributes (technique_F1 − baseline_F1)
-2. **Bootstrap CI**: 1000 resamples, 95% CI
-3. **McNemar's test**: on TP/non-TP outcomes per sample
-4. **Reject claim if 95% CI crosses zero**
+1. **配对差值**：每个样本贡献 (technique_F1 − baseline_F1)
+2. **Bootstrap CI**：1000 次重采样，95% 置信区间
+3. **McNemar 检验**：基于每样本 TP/non-TP 结果
+4. **CI 跨 0 则拒绝该声明**
 
-## Sample Size
+## 样本量
 
-To detect F1 +3% improvement at 80% power:
-- Approximately 300 paired samples
-- Pilot 50 is **insufficient for power**, only for direction-finding
-- Alpha 200 enables single-technique tests
-- Beta 500 enables combination ablations
+为在 80% power 下检测 F1 +3% 改进：
+- 大约 300 配对样本
+- Pilot 50 **power 不足**，仅够找方向
+- Alpha 200 → 单技术显著性测试可行
+- Beta 500 → 组合消融可行
 
-## Stratification
+## 分层报告
 
-Always report **per-data_type** in addition to overall. A technique improving overall but hurting one stratum is often a wrong choice.
+总指标外，**始终**报告按 data_type 的分层结果。一个总指标提升但某个 stratum 下降的技术，往往是错误选择。
 
 ## Holdout
 
-Reserve 20% of golden dataset as **final holdout** — not used during technique development. Only touch at end-of-phase validation.
+预留 20% 的 golden 数据集作为**最终 holdout** —— 开发期不参与决策。仅在阶段末做最终验证时使用。
 
-## Reproducibility
+## 可复现性
 
-Every reported number must come with:
-- Code commit SHA
-- Dataset version + manifest hash
-- Random seeds (model + sampling)
-- vLLM / Qwen-VL checkpoint version
+每个上报的数字必须随附：
+- 代码 commit SHA
+- 数据集版本 + manifest hash
+- 随机种子（模型 + 抽样）
+- vLLM / Qwen-VL checkpoint 版本
 
-See `reproducibility.md`.
+详见 `reproducibility.md`。

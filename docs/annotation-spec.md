@@ -1,43 +1,43 @@
-# Annotation Specification
+# 标注规范
 
-> **Status**: TODO — finalize after Track B Day 2 (path A/B/C decision).
+> **状态**：TODO —— 待 Track B Day 2 路径决策（A/B/C）后定稿。
 
-## What Counts as Anomaly
+## 什么算异常
 
-(To be filled after pilot trial annotation.)
+（待 pilot 试标完成后填充。）
 
-**Anomaly types** (preliminary):
-- `spike` — sudden outlier point/short cluster
-- `dip` — sudden downward outlier
-- `drift` — gradual shift
-- `level_change` — step-like jump to new baseline
-- `pattern_break` — periodic pattern violation
-- `flatline` — sensor stuck (constant over duration)
+**异常类型**（初步）：
+- `spike` —— 突发离群点 / 短聚集
+- `dip` —— 突发向下离群
+- `drift` —— 渐变漂移
+- `level_change` —— 阶跃式跳到新基线
+- `pattern_break` —— 周期模式被打破
+- `flatline` —— 传感器卡死（持续恒定）
 
-## Boundary Rules
+## 边界规则
 
-- Start = first abnormal point
-- End = last abnormal point + 1 (Python slice convention, e.g., `[120, 145]` includes index 144 not 145)
-- For drifts, mark inflection-to-recovery range
-- Margin tolerance: ±2 points (factored into IoU evaluation)
+- 起点 = 第一个异常点
+- 终点 = 最后一个异常点 + 1（Python 切片惯例，例如 `[120, 145]` 包含下标 144 而非 145）
+- 漂移类型：从拐点标到恢复点
+- 边界容差：±2 点（在 IoU 评测中已计入）
 
-## Confidence Scale
+## 置信度尺度
 
-| Level | Score | When to use |
+| 级别 | 分值 | 何时使用 |
 |---|---|---|
-| Certain | 1.0 | Obviously abnormal, would alert in production |
-| Likely | 0.7 | Probably abnormal, would alert with low priority |
-| Borderline | 0.5 | Could go either way; mostly used in critique experiments |
+| Certain | 1.0 | 明显异常，生产环境会告警 |
+| Likely | 0.7 | 大概率异常，会以低优先级告警 |
+| Borderline | 0.5 | 模棱两可；主要用于 critique 类实验 |
 
-## Examples (TODO)
+## 标注示例（TODO）
 
-10 worked examples (positive + edge cases) to be added after pilot.
+待 pilot 完成后补 10 个完整样例（正例 + 边界案例）。
 
-## Quality Gate
+## 质量门
 
-Before batch annotation:
-- 2 annotators independently label same 30 samples
-- Compute Cohen's kappa via `benchmarks/scripts/kappa_calc.py`
-- **kappa < 0.6**: regroup, refine spec, retry
-- **kappa 0.6-0.7**: proceed with risk note
-- **kappa >= 0.7**: proceed with confidence
+批量标注前必须做：
+- 2 名标注员独立标注同样 30 个样本
+- 用 `benchmarks/scripts/kappa_calc.py` 算 Cohen's kappa
+- **kappa < 0.6**：回炉，对齐规范，重做
+- **kappa 0.6-0.7**：勉强启动，记录为风险
+- **kappa >= 0.7**：放心批量

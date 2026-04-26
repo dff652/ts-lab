@@ -1,30 +1,30 @@
-# Experiment Reports
+# 实验报告
 
-One report per experiment in `YYYY-MM-DD-<technique>.md`.
+每个实验一份报告，命名 `YYYY-MM-DD-<technique>.md`。
 
-## Naming Convention
+## 命名规范
 
 ```
 YYYY-MM-DD-<technique>[-<variant>].md
 ```
 
-Examples:
+示例：
 - `2026-04-26-baseline.md`
 - `2026-05-03-self-consistency-n5.md`
 - `2026-05-04-self-consistency-n3.md`
 - `2026-05-10-chain-of-zoom-margin0.1.md`
 
-## Template
+## 模板
 
-Use [`template.md`](template.md) as starting point. Required sections:
-- Setup (model + dataset + seeds + commit)
-- Question (hypothesis being tested)
-- Result (overall + per-data_type + significance)
-- Conclusion (recommendation)
-- Next (follow-ups)
+以 [`template.md`](template.md) 为起点。必含小节：
+- Setup（模型 + 数据集 + 种子 + commit）
+- Question（待检验的假设）
+- Result（总指标 + 分层 + 显著性）
+- Conclusion（结论与建议）
+- Next（后续实验）
 
-## Index
+## 索引
 
-| Date | Technique | F1 Δ | Status |
+| 日期 | 技术 | F1 Δ | 状态 |
 |---|---|---|---|
-| - | - | - | (no experiments yet) |
+| - | - | - | （尚无实验） |

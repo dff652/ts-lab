@@ -1,10 +1,10 @@
-# Reproducibility SOP
+# 可复现性 SOP
 
-> Every benchmark run must be reproducible. If two runs of the same technique on the same dataset give different numbers without changes in input, the experiment is invalid.
+> 每次 benchmark 运行必须可复现。同样的技术、同样的数据集，在输入未变的前提下两次结果不同 —— 本次实验**作废**。
 
-## Run Manifest
+## 运行 Manifest
 
-Every benchmark run produces a manifest pinning:
+每次 benchmark 运行都生成一份 manifest，锁定：
 
 ```json
 {
@@ -32,42 +32,42 @@ Every benchmark run produces a manifest pinning:
 }
 ```
 
-Manifest stored alongside the report at `eval/reports/<run_id>.manifest.json`.
+Manifest 与报告一并存放于 `eval/reports/<run_id>.manifest.json`。
 
-## Pre-Run Checklist
+## 运行前 Checklist
 
-- [ ] Working tree clean (`git status` empty) OR commit dirty state with `WIP` flag
-- [ ] Dataset version exists and hash matches
-- [ ] Model version recorded
-- [ ] Seeds explicitly set in code, not defaulted
-- [ ] No environment variables affecting model behavior unrecorded
+- [ ] 工作树干净（`git status` 为空）；或将 dirty 状态以 `WIP` 标记 commit
+- [ ] 数据集版本存在且 hash 匹配
+- [ ] 模型版本已记录
+- [ ] 种子在代码中显式设置，未使用默认值
+- [ ] 没有未记录的环境变量影响模型行为
 
-## Determinism Caveats
+## 非确定性的注意事项
 
-Even with all of the above, some sources of non-determinism:
+即便满足以上所有条件，仍有以下非确定性来源：
 
-- vLLM kernel scheduling on GPUs (especially with batch size variation)
-- Floating-point reduction order across hardware
-- Network/disk variability for remote-API techniques
+- vLLM 在 GPU 上的核调度（尤其 batch size 变化时）
+- 浮点 reduction 顺序在不同硬件上的差异
+- 远程 API 类技术的网络 / 磁盘抖动
 
-Document observed variance in baseline (run 3 times, compute std). Subsequent improvements must exceed baseline std × 2 to be meaningful.
+在 baseline 时记录观测方差（跑 3 次，算 std）。后续改进必须**超过 baseline std × 2** 才算有意义。
 
-## Versioning Strategy
+## 版本化策略
 
-| Asset | Strategy |
+| 资产 | 策略 |
 |---|---|
-| Code | Git commit SHA |
-| Pilot dataset (<10MB) | Direct git tracking |
-| Alpha-Beta dataset (200-500) | git-lfs or DVC |
-| Production dataset (1000+) | DVC + remote storage |
-| Reports | Git tracked (small markdown + CSV) |
-| Raw model outputs | NOT git tracked (regenerable from manifest) |
+| 代码 | Git commit SHA |
+| Pilot 数据集（<10MB） | 直接 git 跟踪 |
+| Alpha-Beta 数据集（200-500） | git-lfs 或 DVC |
+| Production 数据集（1000+） | DVC + 远程存储 |
+| 实验报告 | Git 跟踪（小体积 markdown + CSV） |
+| 原始模型输出 | **不**入 git（可由 manifest 重生） |
 
-## Re-running an old experiment
+## 复现旧实验
 
 ```bash
 git checkout <commit>
-# verify dataset hash matches manifest
+# 校验数据集 hash 与 manifest 一致
 python -m benchmarks.run_benchmark --technique <name> --dataset <version> --seed <seed>
-# diff against original report
+# 与原报告 diff
 ```

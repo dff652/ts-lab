@@ -1,50 +1,50 @@
-# Issue 1: Add `response_format` passthrough to vLLM backend
+# Issue 1：给 vLLM 后端加 `response_format` 透传
 
-**Suggested labels**: `enhancement`, `priority:high`, `blocks:ts-lab`, `area:inference`
-**Suggested milestone**: ts-lab Phase 2 (Day 14)
-**Estimated effort**: 10–20 lines of code + integration test
+**建议 labels**：`enhancement`, `priority:high`, `blocks:ts-lab`, `area:inference`
+**建议 milestone**：ts-lab Phase 2（Day 14）
+**预计工作量**：10–20 行代码 + 一个集成测试
 
 ---
 
-## Background
+## 背景
 
-The ts-lab project (Qwen-VL Self-Refinement Harness) is implementing inference-time enhancement techniques on top of ts-platform. The first technique — `guided_json` — requires JSON Schema-enforced output from Qwen-VL.
+ts-lab 项目（Qwen-VL Self-Refinement Harness）正在 ts-platform 之上实现推理时增强技术。第一个技术 `guided_json` 需要 Qwen-VL 输出符合 JSON Schema 的强约束。
 
-vLLM natively supports this via the `extra_body.guided_json` parameter ([vLLM docs](https://docs.vllm.ai/en/latest/usage/structured_outputs.html)). Currently ts-platform's vLLM adapter does not expose this parameter to API callers.
+vLLM 原生通过 `extra_body.guided_json` 参数支持此特性（[vLLM 文档](https://docs.vllm.ai/en/latest/usage/structured_outputs.html)）。当前 ts-platform 的 vLLM 适配层未对 API 调用方暴露此参数。
 
-**Impact**: Without this change, JSON parse failure rate on Qwen-VL output remains around 5%, and `vllm_client.py:303-330` returns hard errors when `finish_reason != "stop"`. With it, parse failure can drop to <0.1%.
+**影响**：没有此改动，Qwen-VL 输出的 JSON 解析失败率维持在 ~5%，且 `vllm_client.py:303-330` 在 `finish_reason != "stop"` 时直接 hard error。改动后解析失败率可降至 <0.1%。
 
-## Required Change
+## 必需改动
 
-Add an optional `response_format` parameter that flows from API request → vLLM `extra_body.guided_json`.
+新增可选 `response_format` 参数，从 API 请求 → vLLM `extra_body.guided_json`。
 
-### Affected files
+### 涉及文件
 
-| File | Change |
+| 文件 | 改动 |
 |---|---|
-| `backend/app/adapters/gpu_algorithms/vllm_backend.py` | Accept `response_format` arg, pass to vLLM as `extra_body={"guided_json": <schema>}` |
-| `backend/app/adapters/gpu_algorithms/qwen.py` | Thread parameter through |
-| `backend/app/api/inference_external.py` | Add `response_format: dict \| None = None` field in request schema |
-| `backend/app/schemas/inference_service.py` | Update Pydantic model (if applicable) |
+| `backend/app/adapters/gpu_algorithms/vllm_backend.py` | 接收 `response_format` 参数，传给 vLLM 的 `extra_body={"guided_json": <schema>}` |
+| `backend/app/adapters/gpu_algorithms/qwen.py` | 把参数透传下去 |
+| `backend/app/api/inference_external.py` | 在请求 schema 中加 `response_format: dict \| None = None` 字段 |
+| `backend/app/schemas/inference_service.py` | 更新 Pydantic 模型（如适用） |
 
-### Behavior
+### 行为
 
-- **When `response_format` provided**: model output guaranteed to conform to schema; `finish_reason="stop"` always (no length truncation of structural tokens)
-- **When omitted (default)**: behavior identical to current — fully backward compatible
+- **传入 `response_format` 时**：模型输出强制符合 schema；`finish_reason="stop"` 始终成立（不会因结构 token 截断）
+- **不传时（默认）**：行为与当前完全一致，**完全向后兼容**
 
-## Acceptance Criteria
+## 验收标准
 
-- [ ] API accepts `response_format` field in inference request body
-- [ ] When schema is provided, output 100% parses as valid JSON conforming to schema
-- [ ] On a 50-sample test corpus, parse success rate ≥ 99.9% with `response_format` set
-- [ ] When `response_format` is omitted, integration tests pass without modification (backward compat)
-- [ ] Documentation updated in API docs / OpenAPI spec
-- [ ] At least one integration test added that submits a task with `ANOMALY_SCHEMA` and verifies output structure
+- [ ] API 接受请求体中的 `response_format` 字段
+- [ ] 传入 schema 时，输出 100% 解析为符合 schema 的合法 JSON
+- [ ] 在 50 样本测试集上，传入 `response_format` 时解析成功率 ≥ 99.9%
+- [ ] 不传 `response_format` 时，集成测试无需修改即通过（向后兼容）
+- [ ] API 文档 / OpenAPI spec 更新
+- [ ] 至少加一个集成测试：用 `ANOMALY_SCHEMA` 提交任务并校验输出结构
 
-## Implementation Hints
+## 实现指引
 
 ```python
-# vLLM adapter sketch
+# vLLM 适配层草图
 def call_vllm(payload, ..., response_format: dict | None = None):
     extra_body = {}
     if response_format is not None:
@@ -54,7 +54,7 @@ def call_vllm(payload, ..., response_format: dict | None = None):
     ...
 ```
 
-The schema ts-lab will pass:
+ts-lab 将传入的 schema：
 
 ```python
 ANOMALY_SCHEMA = {
@@ -82,20 +82,20 @@ ANOMALY_SCHEMA = {
 }
 ```
 
-## Lab Dependency
+## Lab 依赖
 
-- **Blocks**: `ts-lab/techniques/vl_self_refinement/guided_json.py`
-- **Required by**: Day 14 (to keep ts-lab Phase 2 on schedule)
-- **Without it**: ts-lab can still proceed with `robust_parser` (no platform change needed), but cannot validate the highest-impact stability technique
+- **阻塞**：`ts-lab/techniques/vl_self_refinement/guided_json.py`
+- **要求合并时间**：Day 14（保证 ts-lab Phase 2 不延期）
+- **若无此改动**：ts-lab 仍可推进 `robust_parser`（不依赖平台改动），但无法验证最高影响的稳定性技术
 
-## Out of Scope
+## 范围外
 
-- Schema validation / pre-checking (let vLLM enforce; we trust caller)
-- Multiple schema modes (JSON only for now; regex / grammar can come later)
-- Performance benchmarking of guided generation overhead
+- Schema 校验 / 预检查（交给 vLLM 强制；信任调用方）
+- 多种 schema 模式（仅 JSON；regex / grammar 之后再说）
+- guided 生成开销的性能 benchmark
 
-## References
+## 引用
 
 - [design-vl-self-refinement.md §3.1](../../../ts-platform/docs/design-vl-self-refinement.md)
-- [design-vl-self-refinement.md §11.2 — ts-platform 配合改动](../../../ts-platform/docs/design-vl-self-refinement.md)
-- vLLM structured outputs: <https://docs.vllm.ai/en/latest/usage/structured_outputs.html>
+- [design-vl-self-refinement.md §11.2 —— ts-platform 配合改动](../../../ts-platform/docs/design-vl-self-refinement.md)
+- vLLM structured outputs：<https://docs.vllm.ai/en/latest/usage/structured_outputs.html>
