@@ -92,11 +92,13 @@ Track C Issue 2 ──────────────────→ chain_
 
 ## 待决问题（合并问 / 等用户拍板）
 
-| 编号 | 问题 | 选项 |
+> **完整选项 / 推荐 / 连锁动作见 [docs/pending-decisions.md](docs/pending-decisions.md)**（2026-05-06 剥离）
+
+| 编号 | 问题 | 选项（详见 pending-decisions.md） |
 |---|---|---|
-| **e** | SDK 抽取路线 | e1: 先抽 `backend/client/` 干净 package（慢，长远好）；e2: ts-lab 先 `requests` 包薄壳（快，未来重写） |
-| **l** | RC-10 沉淀 SOP 是否保留 | l1: 全保留（生产真有用户）；l2: 砍成"自测→merge"（纯实验）；l3: 折中（保留 feature flag + 自测） |
-| **env** | Python 环境 | o1: curl 装 uv（无 sudo，推荐）；o2: `sudo apt install python3.12-venv python3-pip`；o3: docker；o4: 跳过 pytest #2 |
+| **env** | Python 环境（TODO #35） | o1 uv / o2 apt / o3 docker / o4 跳过 |
+| **e** | SDK 抽取路线（TODO #39） | e1 抽干净 package / e2 requests 薄壳 |
+| **l** | RC-10 沉淀 SOP（TODO #37） | l1 全保留 / l2 砍成两步 / l3 折中（flag + 自测） |
 | **j** | Jira 项目 key | 单人维护下不需 Jira，**已自动失效** |
 
 ---
@@ -385,6 +387,7 @@ Track C Issue 2 ──────────────────→ chain_
 - 2026-04-26 #5 ~~平台同步会议~~ 作废（单人维护，无需）
 - 2026-04-26 Track C 流程从"提 issue 等合并"改为"直接实装 ts-platform 改动"
 - 2026-04-26 #38 修订 issue-3 背景段 + README.md 状态表更新（C 项从"not filed"改为"spec ready, urgency reduced"）
+- 2026-05-06 待决问题（env / e / l）剥离到 [docs/pending-decisions.md](docs/pending-decisions.md)，每项给出推荐 + 拍板后连锁动作
 
 ---
 
@@ -399,6 +402,7 @@ Track C Issue 2 ──────────────────→ chain_
 - [docs/reproducibility.md](docs/reproducibility.md) — 复现 SOP（中文）
 - [docs/experiments/template.md](docs/experiments/template.md) — 实验报告模板（中文）
 - [docs/track-c/](docs/track-c/) — ts-platform 改动设计 spec（3 份，已转单人维护视角）
+- [docs/pending-decisions.md](docs/pending-decisions.md) — 待决问题清单（env / SDK / SOP，2026-05-06）
 
 ## ts-platform（治理 / 设计决策）
 - [design-vl-self-refinement.md](../ts-platform/docs/design-vl-self-refinement.md) — 主设计 ⭐
