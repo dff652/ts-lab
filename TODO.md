@@ -514,7 +514,7 @@ design §15.6 默认序：robust_parser → guided_json → baseline → ...
 
 按优先级顺序实施。每个 technique 完成后必须**立即写实验报告**到 `docs/experiments/YYYY-MM-DD-<technique>.md`（用 `docs/experiments/template.md`）。
 
-- [ ] **#23** 实现 `robust_parser.py` 5 级 fallback 链（按 RC-6，最高优先零依赖）
+- [~] **#23** 实现 `robust_parser.py` 5 级 fallback 链（按 RC-6，最高优先零依赖）—— Tier 1-4 已实装 + 29 个单元测试覆盖；Tier 5 框架就绪（`llm_rewrite_fn` 注入点 + 异常处理 + 测试），等 baseline runner 提供 ts-platform client SDK 后注入真实 LLM call。新增 `ParseFailure` 显式异常符合工程原则 1（不返回空 list 假装"成功无异常"）。bug 发现：`_normalize_to_intervals` 对裸 list 输入需要至少 1 项可归一化才算成功，否则散文输入"Anomalies at [50, 60]"会被 tier 2 误判为空成功而不降级到 tier 4 正则抽取（已修）
 - [ ] **#24** 跑 robust_parser benchmark，写实验报告
 - [ ] **#25** 实现 `guided_json.py`（**Blocked on**: Track C Issue 1 合并），跑 benchmark + 写报告
 - [ ] **#26** 实现 `self_consistency.py` 含 N=5 IoU 投票，跑 benchmark + 写报告
@@ -603,6 +603,7 @@ design §15.6 默认序：robust_parser → guided_json → baseline → ...
 - 2026-05-06 待决问题（env / e / l）剥离到 [docs/pending-decisions.md](docs/pending-decisions.md)，每项给出推荐 + 拍板后连锁动作
 - 2026-05-07 11 天空窗：Day 1 三轨除已记录条目外无实质推进；llm-platform 那边推进了一轮 silent-swallow 普查 + 工程原则文档化（[../llm-platform/docs/engineering-principles.md](../llm-platform/docs/engineering-principles.md)），其方法论可反哺本项目（详见下方 §Code Review 2026-05-07）
 - 2026-05-07 增补 §Code Review 2026-05-07 节（来自 llm-platform session 间隙的 ts-lab 复审）+ 4 个新 TODO 项（#40-#43）+ #2 #14-16 #35 #36 #39 状态实际未变，仍待 pending-decisions 拍板
+- 2026-05-07 #23 robust_parser Tier 1-4 实装 + 29 单元测试通过；Tier 5 框架就绪；env 走 o2 路线（apt 装 python3-pip + python3-venv，重建 .venv），#35 隐式按 o2 推进。bug 修：tier 2 在散文输入上的空 list 误判（详见 commit）
 
 ---
 
