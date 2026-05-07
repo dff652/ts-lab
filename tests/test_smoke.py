@@ -34,6 +34,16 @@ def test_imports_eval():
     from eval import compare, metrics  # noqa: F401
 
 
+def test_imports_clients():
+    """Clients package（SDK e2 薄壳）imports."""
+    from clients import ts_platform  # noqa: F401
+    # 确认核心函数存在（签名稳定即可，实现 NotImplementedError 不影响导入）
+    assert hasattr(ts_platform, "infer")
+    assert hasattr(ts_platform, "list_data_pool")
+    assert hasattr(ts_platform, "get_raw_model_output")
+    assert hasattr(ts_platform, "health")
+
+
 def test_iou_basic():
     """IoU correctness — only metric implemented at skeleton stage."""
     from eval.metrics import iou

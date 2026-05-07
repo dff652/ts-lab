@@ -1,10 +1,9 @@
 # 待决问题清单
 
 > **登记日期**：2026-05-06
-> **状态**：等用户拍板
-> **关联 TODO**：#35（env）/ #37（RC-10 SOP）/ #39（SDK 路线）
->
-> 三项决策互相弱耦合，可一次过批。批完直接更新 [TODO.md](../TODO.md) 状态 + 启动对应任务。
+> **拍板日期**：2026-05-07
+> **状态**：✅ 已拍板 `o2 + e2 + l2`（详见末尾 §历史）
+> **关联 TODO**：#35（env）/ #37（RC-10 SOP）/ #39（SDK 路线）—— 全部已完成
 
 ---
 
@@ -86,3 +85,7 @@ SOP ：[ ] l1   [ ] l2   [ ] l3
 ## 历史
 
 - 2026-05-06 创建本文档，从 [TODO.md](../TODO.md) §"待决问题"剥离出来作为独立可拍板单元
+- 2026-05-07 ✅ **拍板 `o2 + e2 + l2`**：
+  - **env = o2**（apt 装 `python3-pip` + `python3-venv`）—— 实际已在 llm-platform session 间隙隐式执行；本日 ts-lab 重建 `.venv` 并 `pip install pytest numpy`，34 项测试通过
+  - **SDK = e2**（ts-lab 内 requests 薄壳）—— 避免 premature abstraction：lab 阶段先验证技术再回头抽干净 SDK；新建 [`clients/ts_platform.py`](../clients/ts_platform.py) 骨架；TODO #14-16（ts-platform `backend/client/` 抽取）降优先到 baseline 跑通后
+  - **SOP = l2**（自测 + merge 两步）—— 单人维护无外部用户，影子 / canary / 1 个月 flag 是 ceremony；TODO #31-34 改写为「lab benchmark 验证 → 写 ts-platform integration design doc → PR + feature flag → merge」简化两步流程，删除 #32（影子模式）与 #33（canary 10%）

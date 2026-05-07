@@ -468,7 +468,7 @@ design §15.6 默认序：robust_parser → guided_json → baseline → ...
 ## Day 1 收尾（立即）
 
 - [x] **#1** 初次提交 ts-lab Day 1 骨架 + push 到 `origin/main`（commit `42eeae9`，43 文件 / 2054 行；远程 `https://github.com/dff652/ts-lab`）
-- [~] **#2** 创建 venv，`pip install -e ".[dev]"`，运行 `pytest tests/ -v` 验证骨架 — **Blocked on**：本机无 pip/venv/conda → 见 #35
+- [x] **#2** 创建 venv，运行 `pytest tests/ -v` 验证骨架 — 2026-05-07 完成（env=o2 拍板后系统装 `python3-pip` + `python3-venv` → 重建 `.venv` → 装 pytest + numpy → 34 项测试通过：5 smoke + 29 robust_parser）。**注**：当前 venv 是最小化（pytest + numpy），完整 dev 依赖（含 jupyter / ipykernel / pandas / sklearn / matplotlib）等需要时再 `pip install -e ".[dev]"`
 
 ## Track C — ts-platform 改动（单人维护，直接实装，无需提 issue）
 
@@ -500,9 +500,11 @@ design §15.6 默认序：robust_parser → guided_json → baseline → ...
 
 ## Track A — 工程（Day 2-7）
 
-- [ ] **#14** 阅读 `ts-platform/backend/tests/example_api_usage.py`（390 行，已跑通）+ `tests/integration/`，规划 `backend/client/` 抽取边界。**起点已存在**：`backend/tests/examples/client.py`（509 行 SDK 草稿，CLAUDE.md 称"外部系统直接复制使用"）—— 抽取本质是把这份从 examples/ 提升为正式 package + 拆模块（auth/inference/data_pool/comparisons/results）
-- [ ] **#15** 在 ts-platform 实现 `backend/client/`（auth / inference / data_pool / comparisons / results）
-- [ ] **#16** 重构 ts-platform `tests/` 改为 import client，验证 CI 通过
+- [ ] **#14**（**降优先**：SDK=e2 拍板后挪到 baseline 跑通之后）阅读 `ts-platform/backend/tests/example_api_usage.py`（390 行，已跑通）+ `tests/integration/`，规划 `backend/client/` 抽取边界
+- [ ] **#15**（**降优先**）在 ts-platform 实现 `backend/client/`（auth / inference / data_pool / comparisons / results）
+- [ ] **#16**（**降优先**）重构 ts-platform `tests/` 改为 import client，验证 CI 通过
+
+> **#14-16 降优先理由**：2026-05-07 SDK=e2 拍板 —— ts-lab 内先用 `clients/ts_platform.py` requests 薄壳跑通 baseline + 至少 1 个 technique，验证 API surface 后再回头做正式 SDK 抽取，避免在未验证的 surface 上投 2-3 天 sunk cost。新增 [`clients/ts_platform.py`](clients/ts_platform.py) 骨架见 #46。
 - [ ] **#17** 实现 `eval/metrics.py`（按 RC-8 三种 F1 + per_data_type breakdown）
 - [ ] **#18** 实现 `eval/compare.py`（按 RC-8 paired_bootstrap / McNemar / comparison_table）
 - [ ] **#19** 实现 `techniques/vl_self_refinement/baseline.py`（单次 Qwen-VL 调用 via client SDK）
@@ -526,7 +528,7 @@ design §15.6 默认序：robust_parser → guided_json → baseline → ...
 
 ## 本次会话新增（2026-04-26）
 
-- [~] **#35** 解决 ts-lab Python 环境（**待用户拍板**，详见 §"待决问题"的 env）
+- [x] **#35** 解决 ts-lab Python 环境 — **2026-05-07 拍板 o2 完成**（apt 装 `python3-pip` + `python3-venv` → 重建 `.venv` → 装 pytest + numpy → 34 项测试通过）
   - o1：curl 装 `uv` 到 `~/.local/bin`（无需 sudo，单二进制，推荐）
   - o2：`sudo apt install python3.12-venv python3-pip`（标准 Debian 路线）
   - o3：用 docker（需指定 image）
@@ -538,9 +540,9 @@ design §15.6 默认序：robust_parser → guided_json → baseline → ...
   - **Step 3**（20 min）加集成测试到 `backend/tests/integration/`：用 ts-lab `ANOMALY_SCHEMA` 提交推理任务，校验输出 100% 合法 JSON
   - **Step 4**（auto）跑 ts-platform 现有 250+ 测试确认零回归
   - 完成后回 ts-lab 把 [techniques/vl_self_refinement/guided_json.py](techniques/vl_self_refinement/guided_json.py) 的 `NotImplementedError` 实装掉
-- [ ] **#37** 决策 RC-10 沉淀 SOP（**待用户拍板** l1/l2/l3，详见 §"待决问题"）
+- [x] **#37** 决策 RC-10 沉淀 SOP — **2026-05-07 拍板 l2**（自测 + merge 两步）。理由：单人维护无外部用户，影子/canary 是 ceremony。Sink 段 #31-#34 已改写：删除 #32 #33（影子/canary）；保留 #31 design doc + #34 全量切换
 - [x] **#38** 修订 [docs/track-c/issue-3-raw-output.md](docs/track-c/issue-3-raw-output.md) 背景段 —— 已加注 2026-04-26 核查结论："vllm_client 已 graceful 失败，原始文本已捕获在 raw_text 字段，仅缺持久化到 DB + API 暴露"
-- [ ] **#39** 决策 SDK 抽取路线（**待用户拍板** e1/e2，详见 §"待决问题"）
+- [x] **#39** 决策 SDK 抽取路线 — **2026-05-07 拍板 e2**（ts-lab 内 requests 薄壳）。理由：lab 阶段先验证技术，验证完再回头抽干净 SDK，避免在未验证 API surface 上投 2-3 天 sunk cost。连锁：#14-16 降优先到 baseline 跑通后；新增 #46 建薄壳
 
 ## 本次复审新增（2026-05-07，详见 §Code Review 2026-05-07）
 
@@ -549,13 +551,18 @@ design §15.6 默认序：robust_parser → guided_json → baseline → ...
 - [ ] **#42** 加 LICENSE（github.com/dff652/ts-lab 是公开仓，缺 LICENSE 是 hygiene 问题）
 - [ ] **#43** 重审 `pyproject.toml` 依赖：每条加注释说明给哪个 technique 用，或暂删未用条目（参考 llm-platform 同日清 ts-platform 死依赖的判断标准）
 - [ ] **#44** README.md 「Development Status (2026-04-26)」日期改为 `see TODO.md` 或脚本生成，避免每次同步
+- [x] **#45** 评估 Function Calling 作为第 8 种 technique — 2026-05-07 创建（低优先 nice-to-have，等 guided_json 跑出 baseline 数据后决策；详见 §技术路线讨论补遗）
+- [~] **#46** 新建 `clients/ts_platform.py` requests 薄壳（**SDK=e2 连锁动作**）—— 骨架就绪：`auth_headers()` + `infer()` + `list_data_pool()` + `get_results()` 几个核心 stub，等环境 + ts-platform Issue 1 实装后填实现
 
-## Sink — 沉淀回 ts-platform（按 RC-10 流程）
+## Sink — 沉淀回 ts-platform（按 l2 简化流程，2026-05-07 拍板）
 
-- [ ] **#31** 识别胜出组合（≥+3% F1，p<0.05），起草 ts-platform integration design doc + PR（feature flag 默认 OFF）
-- [ ] **#32** 影子模式 1 周：新路径与 baseline 并行跑，diff 输出
-- [ ] **#33** canary 10% 流量 1 周，监控吞吐 / 延迟 / 用户反馈
-- [ ] **#34** 全量切换；feature flag 保留 1 个月做 fallback
+> 原 RC-10 六步流程（benchmark → design doc → PR + flag → 影子 → canary → 全量）
+> 在单人维护无外部用户场景下 ceremony 过重。改为两步：
+
+- [ ] **#31** 识别胜出组合（≥+3% F1，p<0.05），起草 ts-platform integration design doc + PR（feature flag 默认 OFF，自测 OK 即可 merge）
+- [x] ~~**#32** 影子模式 1 周~~ —— **2026-05-07 SOP=l2 删除**
+- [x] ~~**#33** canary 10% 流量 1 周~~ —— **2026-05-07 SOP=l2 删除**
+- [ ] **#34** 全量切换；feature flag 保留 1 个月做 fallback（保留以便 prod 出问题快速回退）
 
 ---
 
@@ -604,6 +611,7 @@ design §15.6 默认序：robust_parser → guided_json → baseline → ...
 - 2026-05-07 11 天空窗：Day 1 三轨除已记录条目外无实质推进；llm-platform 那边推进了一轮 silent-swallow 普查 + 工程原则文档化（[../llm-platform/docs/engineering-principles.md](../llm-platform/docs/engineering-principles.md)），其方法论可反哺本项目（详见下方 §Code Review 2026-05-07）
 - 2026-05-07 增补 §Code Review 2026-05-07 节（来自 llm-platform session 间隙的 ts-lab 复审）+ 4 个新 TODO 项（#40-#43）+ #2 #14-16 #35 #36 #39 状态实际未变，仍待 pending-decisions 拍板
 - 2026-05-07 #23 robust_parser Tier 1-4 实装 + 29 单元测试通过；Tier 5 框架就绪；env 走 o2 路线（apt 装 python3-pip + python3-venv，重建 .venv），#35 隐式按 o2 推进。bug 修：tier 2 在散文输入上的空 list 误判（详见 commit）
+- 2026-05-07 ✅ pending-decisions.md 三项正式拍板 `o2 + e2 + l2`：#35（env）#37（SOP）#39（SDK）全部完成；#14-16 降优先；#31-34 简化为两步（#32/#33 删除）；新增 #46（建 clients/ts_platform.py 薄壳骨架）
 
 ---
 
